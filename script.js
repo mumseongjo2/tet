@@ -6,12 +6,55 @@ document.addEventListener("DOMContentLoaded", () => {
     const BLOCK_SIZE = 30;
     const INFO_WIDTH = 150;
 
+
+
+    const moveLeftButton = document.getElementById("moveLeft");
+    const moveRightButton = document.getElementById("moveRight");
+    const rotateButton = document.getElementById("rotate");
+    const moveDownButton = document.getElementById("moveDown");
+    const dropNowButton = document.getElementById("dropNow");
+
+    moveLeftButton.addEventListener("click", () => {
+        if (!collide(currentX - 1, currentY, currentShape)) {
+            currentX--;
+            drawBoard();
+        }
+    });
+
+    moveRightButton.addEventListener("click", () => {
+        if (!collide(currentX + 1, currentY, currentShape)) {
+            currentX++;
+            drawBoard();
+        }
+    });
+
+    rotateButton.addEventListener("click", () => {
+        const rotatedShape = rotateShape(currentShape);
+        if (!collide(currentX, currentY, rotatedShape)) {
+            currentShape = rotatedShape;
+            drawBoard();
+        }
+    });
+
+    moveDownButton.addEventListener("click", () => {
+        drop();
+    });
+
+    dropNowButton.addEventListener("click", () => {
+        while (!collide(currentX, currentY + 1, currentShape)) {
+            currentY++;
+        }
+        drop();
+    });
+
+
     canvas.width = COLS * BLOCK_SIZE + INFO_WIDTH;
     canvas.height = ROWS * BLOCK_SIZE;
 
     const COLORS = [
         '#A8D5E2', '#FBC4AB', '#CDE7B0', '#F9D3B4', '#E8D7F1', '#FAD2E1', '#FFE4A3'
     ];
+
 
     const SHAPES = [
         [[1, 1, 1, 1]], 
