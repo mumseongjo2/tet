@@ -6,19 +6,30 @@
     <title>Tetris</title>
     <style>
         canvas {
-            border: 1px solid #000;
+            border: 0.5px solid #ccc;
         }
         #restartButton {
             position: absolute;
-            top: 20px;
-            left: 20px;
+            top: 120px;
+            left: 315px;
             padding: 10px;
             background-color: #f0f0f0;
             border: 1px solid #000;
             display: none;
         }
+        #gameControls {
+            position: absolute;
+            top: 660px;
+            left: 20px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border: 0px solid #000;
+		    border-radius:10px;
+			width: 300px;
+		    font-size: 20px;
+        }
     </style>
-	    <link rel="stylesheet" href="styles.css"> 
+	 
 </head>
 <body>
     <canvas id="gameCanvas"></canvas>
@@ -27,12 +38,14 @@
     <script src="script.js"></script>
 <BR><BR><BR><BR>
 <div id="gameControls" class="mobile-controls">
-&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
-	<button id="moveLeft">←</button>
-    <button id="moveRight">→</button>
-    <button id="rotate">↑</button>
-    <button id="moveDown">↓</button>
-    <button id="dropNow">SPACE BAR</button> <!-- Spacebar 대체 버튼 -->
+<center>	
+	<button id="moveLeft" style="width: 40px; height:40px; border-radius:50px; font-size:15px">◀</button>
+    <button id="moveDown" style="width: 40px; height:40px; border-radius:50px; font-size:15px">▼</button>
+&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+	<button id="rotate" style="width: 40px; height:40px; border-radius:50px; font-size:15px">▲</button>
+    <button id="moveRight" style="width: 40px; height:40px; border-radius:50px; font-size:15px">▶</button>
+<BR><BR>
+    <button id="dropNow"style="width: 250px; height:30px; border-radius:3px; font-size:15px">SPACE BAR</button> <!-- Spacebar 대체 버튼 -->
 </div>
 </body>
 </html>
