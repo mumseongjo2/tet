@@ -66,7 +66,10 @@ document.addEventListener("DOMContentLoaded", () => {
         [[1, 1], [1, 1]] 
     ];
 
-    let board, currentShape, currentX, currentY, currentColor, blockLabels, intervalTime, intervalId, linesCleared, gameOver, startTime;
+    let board, currentShape, currentX, currentY, currentColor;
+	let nextShape, nextColor; // 다음 블록을 위한 변수 추가
+	let nextBlockLabels = {}; // 다음 블록 레이블 저장
+	let	blockLabels, intervalTime, intervalId, linesCleared, gameOver, startTime;
     const restartButton = document.getElementById('restartButton');
     restartButton.style.display = "block";  // 초기 화면에서 버튼을 보이게 설정
 
@@ -76,6 +79,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let starPositions = {};  
 
+    // Act image
+    const actImg = new Image();
+    actImg.src = "act.png"; 
+
+    let actPositions = {};  
+
     function initGame() {
         board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
         currentShape = null;
@@ -84,11 +93,13 @@ document.addEventListener("DOMContentLoaded", () => {
         currentColor = null;
         blockLabels = {};
         starPositions = {};  
+        actPositions = {};  
         intervalTime = 1000
         linesCleared = 0;
         gameOver = false;
         startTime = Date.now();
 	    starCount = 0; // 별 카운트를 0으로 초기화
+	    actCount = 0; // act 카운트를 0으로 초기화
         restartButton.style.display = "none"; // 게임이 시작되면 버튼 숨기기
         resetShape();
         clearInterval(intervalId);
@@ -129,15 +140,14 @@ function drawBlock(x, y, color, label = '') {
 
  
 
-    // 레이블 (별 또는 텍스트)
+    // 레이블 (별)
     if (label === 'star' || starPositions[`${y}-${x}`]) {
-        ctx.shadowBlur = 0; // 텍스트나 별에는 그림자 제거
+        ctx.shadowBlur = 0; // 별에는 그림자 제거
         ctx.drawImage(starImg, blockX, blockY, BLOCK_SIZE, BLOCK_SIZE); // 별 이미지
-    } else if (label) {
-        ctx.shadowBlur = 0; // 텍스트나 별에는 그림자 제거
-        ctx.fillStyle = "#000";
-        ctx.font = "bold 12px Arial";
-        ctx.fillText(label, blockX + BLOCK_SIZE / 4, blockY + BLOCK_SIZE / 1.5);
+    } else if (label === 'act' || actPositions[`${y}-${x}`]) {
+        ctx.shadowBlur = 0; // act에는 그림자 제거
+        ctx.drawImage(actImg, blockX, blockY, BLOCK_SIZE, BLOCK_SIZE); // act 이미지
+    
     }
 }
 
@@ -165,20 +175,11 @@ CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
 };
 
 let starCount = 0; // 별 카운트를 저장할 변수 추가
-
+let actCount = 0; // 별 카운트를 저장할 변수 추가
 
 
     function drawBoard() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // 배경 이미지 설정
-//    if (backgroundImg.complete) {  // 이미지가 로드되었는지 확인
-//        ctx.drawImage(backgroundImg, 0, 0, COLS * BLOCK_SIZE, ROWS * BLOCK_SIZE);  // 이미지 크기에 맞게 그리기
-//    } else {
-//        backgroundImg.onload = () => {
-//            ctx.drawImage(backgroundImg, 0, 0, COLS * BLOCK_SIZE, ROWS * BLOCK_SIZE); // 이미지가 로드되면 그리기
-//        };
-//    }
 
     // 격자 그리기
     ctx.strokeStyle = "#ccc";  // 격자 선 색상
@@ -219,24 +220,38 @@ let starCount = 0; // 별 카운트를 저장할 변수 추가
     ctx.fillStyle = "#fff";
     ctx.fillRect(COLS * BLOCK_SIZE, 0, INFO_WIDTH, canvas.height);
     ctx.strokeStyle = "#ccc";
-    ctx.lineWidth = 2;
+         
+    ctx.lineWidth = 0.5;
     ctx.beginPath();
     ctx.moveTo(COLS * BLOCK_SIZE, 0);
     ctx.lineTo(COLS * BLOCK_SIZE, canvas.height);
     ctx.stroke();
 
+    ctx.strokeRect(COLS * BLOCK_SIZE, 0, INFO_WIDTH, canvas.height);//다음블록
+	ctx.fillText("다음 블록:", COLS * BLOCK_SIZE + 1, 1);
+                if (nextShape) {
+                    for (let y = 0; y < nextShape.length; y++) {
+                        for (let x = 0; x < nextShape[y].length; x++) {
+                            if (nextShape[y][x]) {
+                                drawBlock(COLS + x +0.5, y + 1, nextColor);
+                            }
+                        }
+                    }
+                }
+
     // 게임 시간과 통계 표시
     ctx.fillStyle = "#000";
     ctx.font = "14px Arial";
-    ctx.fillText("시간: " + formatTime(elapsedTime()), COLS * BLOCK_SIZE + 10, 30);
-    ctx.fillText("삭제된 라인: " + linesCleared, COLS * BLOCK_SIZE + 10, 60);
-    ctx.fillText("삭제된 별: " + starCount, COLS * BLOCK_SIZE + 10, 90);
+    ctx.fillText("시간: " + formatTime(elapsedTime()), COLS * BLOCK_SIZE + 10, 120);
+    ctx.fillText("제거한 라인: " + linesCleared, COLS * BLOCK_SIZE + 10, 150);
+    ctx.fillText("습득한 별: " + starCount, COLS * BLOCK_SIZE + 10, 180);
+    ctx.fillText("리액션: " + actCount, COLS * BLOCK_SIZE + 10, 210);
 
     // 게임 오버 처리
     if (gameOver) {
         ctx.fillStyle = "#5f5c00";
-        ctx.font = "16px Arial";
-        ctx.fillText(`별 ${starCount}개!`, COLS * BLOCK_SIZE + 10, canvas.height / 2);
+        ctx.font = "15px Arial";
+        ctx.fillText(`별 ${starCount}개! 리액션 ${actCount}개!`, COLS * BLOCK_SIZE + 10, canvas.height / 2);
         restartButton.style.display = "block"; // 게임 오버 시에만 버튼 보이게 설정
     }
 }
@@ -252,24 +267,40 @@ let starCount = 0; // 별 카운트를 저장할 변수 추가
     }
 
     function resetShape() {
+       if (!nextShape) {
         const index = Math.floor(Math.random() * SHAPES.length);
-        currentShape = SHAPES[index];
-        currentColor = COLORS[index];
+                currentShape = SHAPES[index];
+                currentColor = COLORS[index];
+        } else {
+                currentShape = nextShape;
+                currentColor = nextColor;
+        }
+
+		const nextIndex = Math.floor(Math.random() * SHAPES.length);
+        nextShape = SHAPES[nextIndex];
+        nextColor = COLORS[nextIndex];
+
         currentX = 4;
         currentY = 0;
 
+
+
+
+
         blockLabels = {};
-//        let labelChar = 'A';   //블록에 글자표시
         for (let y = 0; y < currentShape.length; y++) {
             for (let x = 0; x < currentShape[y].length; x++) {
                 if (currentShape[y][x]) {
-                    // 0.5% 확률로 해당 칸에 star 이미지가 표시되도록 설정
-                    const label = Math.random() < 0.05 ? 'star' : '';//labelChar;  //블록에 글자표시
-                    blockLabels[`${y}-${x}`] = label;
+                const rand = Math.random();
+                let label = '';
+                if (rand < 0.06) {
+                    label = 'star'; // 5% 확률로 star
+                } else if (rand < 0.07) {
+                    label = 'act'; // 5% 확률로 다른 아이템
+                }
+                blockLabels[`${y}-${x}`] = label;
 
-//                    if (label !== 'star') {
-//                        labelChar = String.fromCharCode(labelChar.charCodeAt(0) + 1);
-//                    } //블록에 글자표시
+
                 }
             }
         }
@@ -317,10 +348,12 @@ function rotateShape(shape) {
                     blockLabels[`${currentY + y}-${currentX + x}`] = label;
 
                     // 별을 저장하려면, 별 위치를 `starPositions`에 추가
-                    if (label === 'star') {
-                        starPositions[`${currentY + y}-${currentX + x}`] = true;
-                    }
+                if (label === 'star') {
+                    starPositions[`${currentY + y}-${currentX + x}`] = true;
+                } else if (label === 'act') {
+                    actPositions[`${currentY + y}-${currentX + x}`] = true;
                 }
+				}
             });
         });
     }
@@ -333,8 +366,10 @@ function removeLines() {
                 if (starPositions[`${y}-${x}`]) {
                     starCount++; // 별이 있는 경우 카운트 증가
                     delete starPositions[`${y}-${x}`]; // 별 위치 삭제
-                }
-            });
+                } else if (actPositions[`${y}-${x}`]) {
+                    actCount++; // 다른 아이템 카운트 증가
+                    delete actPositions[`${y}-${x}`]; // 다른 아이템 위치 삭제
+                }            });
 
             board.splice(y, 1);
             board.unshift(Array(COLS).fill(0));
@@ -352,6 +387,7 @@ function removeLines() {
 
             // 별 위치도 한 칸씩 위로 밀기
             const newStarPositions = {};
+            const newactPositions = {};
             for (const key in starPositions) {
                 const [starY, starX] = key.split('-').map(Number);
                 if (starY < y) {
@@ -360,10 +396,19 @@ function removeLines() {
                     newStarPositions[key] = true;
                 }
             }
-            starPositions = newStarPositions;
+            for (const key in actPositions) {
+                const [actY, actX] = key.split('-').map(Number);
+                if (actY < y) {
+                    newactPositions[`${actY + 1}-${actX}`] = true;
+                } else if (actY > y) {
+                    newactPositions[key] = true;
+                }
+            }
 
+            starPositions = newStarPositions;
+            actPositions = newactPositions;
             linesCleared++;
-            intervalTime = Math.max(150, 1000 - linesCleared * 500);
+            intervalTime = Math.max(150, 1000 - linesCleared * 50);
             clearInterval(intervalId);
             intervalId = setInterval(drop, intervalTime);
 
@@ -371,6 +416,9 @@ function removeLines() {
         }
     }
 }
+
+
+
 
     function drop() {
         if (collide(currentX, currentY + 1, currentShape)) {
