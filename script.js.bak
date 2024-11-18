@@ -6,6 +6,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const BLOCK_SIZE = 30;
     const INFO_WIDTH = 150;
 
+// Audio 객체 생성
+const backgroundMusic = new Audio("bgm.mp3");
+backgroundMusic.loop = true; // 반복 재생
+backgroundMusic.volume = 0.5; // 볼륨 설정 (0.0 ~ 1.0)
 
     const moveLeftButton = document.getElementById("moveLeft");
     const moveRightButton = document.getElementById("moveRight");
@@ -105,6 +109,9 @@ document.addEventListener("DOMContentLoaded", () => {
         intervalId = setInterval(drop, intervalTime);
         drawBoard();
 
+    // 게임 시작 시 음악 재생
+    backgroundMusic.currentTime = 0; // 음악 처음부터 재생
+     
 
     }
 
