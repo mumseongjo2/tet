@@ -1,11 +1,20 @@
+
 document.addEventListener("DOMContentLoaded", () => {
-    const canvas = document.getElementById("gameCanvas");
+
+	const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
     const ROWS = 20;
     const COLS = 10;
     const BLOCK_SIZE = 30;
     const INFO_WIDTH = 150;
 
+
+	// 효과음 초기화
+	const moveSound = new Audio("tik.mp3");
+	const spinSound = new Audio("spin.mp3");
+	const delSound = new Audio("del.mp3");
+	const dropSound = new Audio("drop.mp3");
+	const lineSound = new Audio("line.mp3");
 
     const moveLeftButton = document.getElementById("moveLeft");
     const moveRightButton = document.getElementById("moveRight");
@@ -16,6 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
     moveLeftButton.addEventListener("click", () => {
         if (!collide(currentX - 1, currentY, currentShape)) {
             currentX--;
+	        moveSound.play(); // 좌우 이동 시 효과음 재생
             drawBoard();
         }
     });
@@ -23,6 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
     moveRightButton.addEventListener("click", () => {
         if (!collide(currentX + 1, currentY, currentShape)) {
             currentX++;
+	        moveSound.play(); // 좌우 이동 시 효과음 재생
             drawBoard();
         }
     });
@@ -30,7 +41,8 @@ document.addEventListener("DOMContentLoaded", () => {
     rotateButton.addEventListener("click", () => {
         const rotatedShape = rotateShape(currentShape);
         if (!collide(currentX, currentY, rotatedShape)) {
-            currentShape = rotatedShape;
+			spinSound.play();
+			currentShape = rotatedShape;
             drawBoard();
         }
     });
@@ -41,7 +53,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     dropNowButton.addEventListener("click", () => {
         while (!collide(currentX, currentY + 1, currentShape)) {
-            currentY++;
+			dropSound.play();
+			currentY++;
         }
         drop();
     });
@@ -50,7 +63,10 @@ document.addEventListener("DOMContentLoaded", () => {
     canvas.width = COLS * BLOCK_SIZE + INFO_WIDTH;
     canvas.height = ROWS * BLOCK_SIZE;
 
-    const COLORS = [
+
+	
+	
+	const COLORS = [
         '#A8D5E2', '#FBC4AB', '#CDE7B0', '#F9D3B4', '#E8D7F1', '#FAD2E1', '#FFE4A3'
     ];
 
@@ -84,7 +100,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let actPositions = {};  
 
-    function initGame() {
+
+ 
+	const gameSound = new Audio("bgm.mp3");
+	const endingSound = new Audio("ending.mp3");
+
+	    gameSound.loop = true;  // 반복 설정 (필요에 따라)
+
+    function initGame(initialLoad = true) {
         board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
         currentShape = null;
         currentX = 4;
@@ -95,21 +118,28 @@ document.addEventListener("DOMContentLoaded", () => {
         actPositions = {};  
         intervalTime = 1000
         linesCleared = 0;
-        gameOver = false;
         startTime = Date.now();
 	    starCount = 0; // 별 카운트를 0으로 초기화
 	    actCount = 0; // act 카운트를 0으로 초기화
-        restartButton.style.display = "none"; // 게임이 시작되면 버튼 숨기기
         resetShape();
-        clearInterval(intervalId);
-        intervalId = setInterval(drop, intervalTime);
-        drawBoard();
+    if (initialLoad) {
+        gameOver = false; // 초기 로드 시만 gameOver를 true로 설정
+        gameSound.currentTime = 0; // 기존 사운드가 있다면 처음부터 다시 재생
+		gameSound.play(); // 게임 시작 시 bgm.mp3을 재생
+    }
 
+    drawBoard();
 
     }
 
-	    // 게임 시작 버튼 클릭 이벤트
-    restartButton.addEventListener('click', initGame);
+// 재시작 버튼 클릭 이벤트
+restartButton.addEventListener('click', () => {
+    gameOver = false; // 게임 상태를 실행 상태로 변경
+    // 게임 오버 처리...
+	initGame(false); // 초기화하되, gameOver 변경하지 않음
+    intervalId = setInterval(drop, intervalTime); // 새 인터벌 시작
+    restartButton.style.display = "none"; // 재시작 버튼 숨김
+});
 
 function drawBlock(x, y, color, label = '') {
     const blockX = x * BLOCK_SIZE;
@@ -362,13 +392,18 @@ function rotateShape(shape) {
 function removeLines() {
     for (let y = ROWS - 1; y >= 0; y--) {
         if (board[y].every(cell => cell !== 0)) {
-            // 삭제된 라인의 별 개수를 확인
+
+        lineSound.play(); // 줄 삭제 사운드			
+			
+			// 삭제된 라인의 별 개수를 확인
             board[y].forEach((cell, x) => {
                 if (starPositions[`${y}-${x}`]) {
-                    starCount++; // 별이 있는 경우 카운트 증가
+			        delSound.play(); // 아이템 습득 시 소리
+					starCount++; // 별이 있는 경우 카운트 증가
                     delete starPositions[`${y}-${x}`]; // 별 위치 삭제
                 } else if (actPositions[`${y}-${x}`]) {
-                    actCount++; // 다른 아이템 카운트 증가
+			        delSound.play(); // 아이템 습득 시 소리
+					actCount++; // 다른 아이템 카운트 증가
                     delete actPositions[`${y}-${x}`]; // 다른 아이템 위치 삭제
                 }            });
 
@@ -422,13 +457,17 @@ function removeLines() {
 
 
     function drop() {
-        if (collide(currentX, currentY + 1, currentShape)) {
+		if (collide(currentX, currentY + 1, currentShape)) {
             freeze();
             removeLines();
             resetShape();
             if (collide(currentX, currentY, currentShape)) {
                 gameOver = true;
                 clearInterval(intervalId);
+				gameSound.pause();  // 게임 오버 시 사운드 멈추기
+
+
+	            endingSound.play();  // 게임 오버 효과음
             }
         } else {
             currentY++;
@@ -443,13 +482,15 @@ function removeLines() {
         switch (event.key) {
             case "ArrowLeft":
                 if (!collide(currentX - 1, currentY, currentShape)) {
-                    currentX--;
+			        moveSound.play(); // 좌우 이동 시 효과음 재생
+					currentX--;
                     moved = true;
                 }
                 break;
             case "ArrowRight":
                 if (!collide(currentX + 1, currentY, currentShape)) {
-                    currentX++;
+			        moveSound.play(); // 좌우 이동 시 효과음 재생
+					currentX++;
                     moved = true;
                 }
                 break;
@@ -459,13 +500,15 @@ function removeLines() {
             case "ArrowUp":
                 const rotatedShape = rotateShape(currentShape);
                 if (!collide(currentX, currentY, rotatedShape)) {
-                    currentShape = rotatedShape;
+			        spinSound.play(); 
+					currentShape = rotatedShape;
                     moved = true;
                 }
                 break;
             case " ":
                 while (!collide(currentX, currentY + 1, currentShape)) {
-                    currentY++;
+			        dropSound.play(); 
+					currentY++;
                 }
                 drop();
                 return;
