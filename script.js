@@ -9,12 +9,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const INFO_WIDTH = 150;
 
 
-	// 효과음 초기화
-	const moveSound = new Audio("tik.mp3");
-	const spinSound = new Audio("spin.mp3");
-	const delSound = new Audio("del.mp3");
-	const dropSound = new Audio("drop.mp3");
-	const lineSound = new Audio("line.mp3");
 
     const moveLeftButton = document.getElementById("moveLeft");
     const moveRightButton = document.getElementById("moveRight");
@@ -105,9 +99,18 @@ document.addEventListener("DOMContentLoaded", () => {
 	const gameSound = new Audio("bgm.mp3");
 	const endingSound = new Audio("ending.mp3");
 
+	// 효과음 초기화
+	const moveSound = new Audio("tik.mp3");
+	const spinSound = new Audio("spin.mp3");
+	const delSound = new Audio("del.mp3");
+	const dropSound = new Audio("drop.mp3");
+	const lineSound = new Audio("line.mp3");
+
+
+
 	    gameSound.loop = true;  // 반복 설정 (필요에 따라)
 
-    function initGame(initialLoad = true) {
+    function initGame(initialLoad = false) {
         board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
         currentShape = null;
         currentX = 4;
@@ -209,6 +212,17 @@ let starCount = 0; // 별 카운트를 저장할 변수 추가
 let actCount = 0; // 별 카운트를 저장할 변수 추가
 
 
+function calculateGhostPosition() {
+    let ghostY = currentY;
+
+    // 현재 블록을 아래로 내리며 충돌 체크
+    while (!collide(currentX, ghostY + 1, currentShape)) {
+        ghostY++;
+    }
+
+    return ghostY;
+}
+
     function drawBoard() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -233,9 +247,26 @@ let actCount = 0; // 별 카운트를 저장할 변수 추가
         for (let x = 0; x < COLS; x++) {
             if (board[y][x]) {
                 drawBlock(x, y, COLORS[board[y][x] - 1], blockLabels[`${y}-${x}`] || '');
+
+
             }
         }
     }
+
+    // 가이드 블록 위치 계산
+    const ghostY = calculateGhostPosition();
+
+    // 가이드 블록 그리기
+    for (let y = 0; y < currentShape.length; y++) {
+        for (let x = 0; x < currentShape[y].length; x++) {
+            if (currentShape[y][x]) {
+                ctx.globalAlpha = 0.3; // 투명도를 낮춰서 가이드 블록 표시
+                drawBlock(currentX + x, ghostY + y, currentColor);
+                ctx.globalAlpha = 1.0; // 원래 블록은 투명도 없음
+            }
+        }
+    }
+
 
     // 현재 블록 그리기
     for (let y = 0; y < currentShape.length; y++) {
@@ -243,6 +274,8 @@ let actCount = 0; // 별 카운트를 저장할 변수 추가
             if (currentShape[y][x]) {
                 const label = blockLabels[`${y}-${x}`] || '';
                 drawBlock(currentX + x, currentY + y, currentColor, label);
+
+
             }
         }
     }
