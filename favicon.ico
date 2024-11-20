@@ -1,0 +1,4 @@
+# favicon.ico 파일 추가 및 커밋
+git add favicon.ico
+git commit -m "Add favicon.ico"
+git push origin main
